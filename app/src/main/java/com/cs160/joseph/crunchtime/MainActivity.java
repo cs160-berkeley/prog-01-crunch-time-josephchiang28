@@ -1,8 +1,5 @@
 package com.cs160.joseph.crunchtime;
 
-import static com.cs160.joseph.crunchtime.ExerciseListViewAdapter.FIRST_COLUMN;
-import static com.cs160.joseph.crunchtime.ExerciseListViewAdapter.SECOND_COLUMN;
-
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -26,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class MainActivity extends ActionBarActivity implements AdapterView.OnItemSelectedListener {
+public class MainActivity extends ActionBarActivity {
 
     // Amount to burn 100 Calories for 150lb person
     public static final int BASE_CALORIES = 100;
@@ -84,52 +81,19 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         ArrayList<String> exerciseList = new ArrayList<String>(exerciseCalories.keySet());
 
-
         Spinner exerciseSpinner = (Spinner) findViewById(R.id.exerciseSpinner);
-        // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> exerciseSpinnerAdapter = ArrayAdapter.createFromResource(this, R.array.exercise_array, android.R.layout.simple_spinner_item);
-        // Specify the layout to use when the list of choices appears
         exerciseSpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        // Apply the adapter to the spinner
         exerciseSpinner.setAdapter(exerciseSpinnerAdapter);
 
-//        TableLayout exerciseTable = (TableLayout) findViewById(R.id.exerciseTable);
-//        for (String key: exerciseCalories.keySet()) {
-//            TableRow exerciseRow = new TableRow(this);
-//
-//            TextView exerciseName = new TextView(this);
-//            exerciseName.setText(key);
-//            exerciseName.setTextSize(18);
-//            exerciseName.setGravity(Gravity.LEFT);
-//
-//            TextView exerciseCount = new TextView(this);
-//            exerciseCount.setText("0");
-//            exerciseCount.setTextSize(18);
-//            exerciseCount.setGravity(Gravity.RIGHT);
-//
-//            exerciseRow.addView(exerciseName);
-//            exerciseRow.addView(exerciseCount);
-//            exerciseTable.addView(exerciseRow, new TableLayout.LayoutParams(
-//                    TableLayout.LayoutParams.MATCH_PARENT,
-//                    TableLayout.LayoutParams.WRAP_CONTENT));
-//        }
-
-//        ListView exerciseListView = (ListView) findViewById(R.id.exerciseListView);
-////        ArrayList<String> exerciseList = new ArrayList<String>(R.array.exercise_array);
-////        ArrayAdapter<String> exerciseListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, exerciseList);
-//        ArrayList<HashMap<String, String>> exerciseListMap = new ArrayList<HashMap<String, String>>();
-//        for (String key: exerciseCalories.keySet()) {
-//            HashMap<String, String> map = new HashMap<String, String>();
-//            map.put(FIRST_COLUMN, key);
-//            map.put(SECOND_COLUMN, exerciseCalories.get(key).toString());
-//        }
-////        SimpleAdapter exerciseListAdapter = new SimpleAdapter(this, exerciseListMap, R.layout.exercise_row, new String[] {"exercise", "count"}, new int[] {R.id.exerciseName, R.id.exerciseCount});
-//        ExerciseListViewAdapter exerciseListAdapter = new ExerciseListViewAdapter(this, exerciseListMap);
-//        exerciseListView.setAdapter(exerciseListAdapter);
-////        setListAdapter(exerciseListAdapter);
+        StringBuffer outputBuffer = new StringBuffer();
+        for (String exercise: EXERCISES) {
+            outputBuffer.append(String.format("%s %s %s\n", exercise, "0.00", exerciseUnits.get(exercise)));
+        }
+        TextView convertedTextView = (TextView) findViewById(R.id.convertedText);
+        convertedTextView.setText(outputBuffer.toString());
     }
 
     @Override
@@ -154,18 +118,6 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-        // An item was selected. You can retrieve the selected item using
-        // parent.getItemAtPosition(pos)
-        String exercise = parent.getItemAtPosition(pos).toString();
-//        updateView(exercise, 0, 0);
-    }
-
-    public void onNothingSelected(AdapterView<?> parent) {
-        // Another interface callback
-    }
-
     public void updateToCalories(View view) {
         Spinner exerciseSpinner =(Spinner) findViewById(R.id.exerciseSpinner);
         String curExercise = exerciseSpinner.getSelectedItem().toString().toLowerCase().replaceAll(" ", "-");
@@ -182,13 +134,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         float equivalentCalories = count / exerciseCalories.get(curExercise) * BASE_CALORIES;
         StringBuffer outputBuffer = new StringBuffer();
         for (String exercise: EXERCISES) {
-//            outputBuffer.append(exercise);
-//            outputBuffer.append(getString(R.string.tab));
             float equivalentCount = count / exerciseCalories.get(curExercise) * exerciseCalories.get(exercise);
-//            outputBuffer.append(String.format("%.2f", equivalentCount));
-//            outputBuffer.append("\t");
-//            outputBuffer.append(exerciseUnits.get(exercise));
-//            outputBuffer.append("\n");
             outputBuffer.append(String.format("%s %s %s\n", exercise, String.format("%.2f", equivalentCount), exerciseUnits.get(exercise)));
         }
 
@@ -197,21 +143,32 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
         TextView convertedTextView = (TextView) findViewById(R.id.convertedText);
         convertedTextView.setText(outputBuffer.toString());
-
     }
 
     public void updateFromCalories(View view) {
         Spinner exerciseSpinner =(Spinner) findViewById(R.id.exerciseSpinner);
-        String exercise = exerciseSpinner.getSelectedItem().toString().toLowerCase().replaceAll(" ", "-");
+        String curExercise = exerciseSpinner.getSelectedItem().toString().toLowerCase().replaceAll(" ", "-");
 
         EditText caloriesField = (EditText) findViewById(R.id.exerciseCalories);
         String caloriesString = caloriesField.getText().toString();
-        int calories;
+
         if (caloriesString.length() == 0) {
             Toast.makeText(MainActivity.this, "Please enter calories burnt...", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        calories = Integer.valueOf(caloriesString);
+        float calories = Float.valueOf(caloriesString);
+        float equivalentCurExerciseCount = calories / BASE_CALORIES * exerciseCalories.get(curExercise);
+        StringBuffer outputBuffer = new StringBuffer();
+        for (String exercise: EXERCISES) {
+            float equivalentCount = calories / BASE_CALORIES * exerciseCalories.get(exercise);
+            outputBuffer.append(String.format("%s %s %s\n", exercise, String.format("%.2f", equivalentCount), exerciseUnits.get(exercise)));
+        }
+
+        EditText countField = (EditText) findViewById(R.id.exerciseCount);
+        countField.setText(Float.toString(equivalentCurExerciseCount));
+
+        TextView convertedTextView = (TextView) findViewById(R.id.convertedText);
+        convertedTextView.setText(outputBuffer.toString());
     }
 }
